@@ -10,6 +10,7 @@
 <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.css"/>
 <link rel="stylesheet" href="style.css" />
 <link href='https://fonts.googleapis.com/css?family=Exo+2|Open+Sans' rel='stylesheet' type='text/css'>
+<link rel="stylesheet" href="font-awesome-4.5.0/css/font-awesome.min.css">
 
 
 <title>
@@ -28,7 +29,7 @@ Smart City Lighting Demo
 	</div>
 
 
-	<div class='go-back-button'> </div>
+	<a class='go-back-button fa fa-caret-square-o-up fa-4x'> </a>
 
 
 
@@ -310,6 +311,10 @@ Smart City Lighting Demo
 		infoColumn.css({'display':'none'})
 	};
 
+	var bindBackButton = function() {
+		$('.go-back-button').on('click', renderWorldView);
+	};
+
 
 
 	var init = function() {
@@ -324,6 +329,7 @@ Smart City Lighting Demo
 		createCountryLayer();
 		createCityLayers();
 		createStreetLayers();
+		bindBackButton();
 	};
 
 
@@ -353,6 +359,7 @@ Smart City Lighting Demo
 			header = $('.info-column-header');
 
 		$('.info-column').fadeIn(200)
+		$('.go-back-button').css({'color':'white'})
 
 		clearLayers();
 		unsetZoomConstraint();
