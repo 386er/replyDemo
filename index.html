@@ -29,7 +29,7 @@ Smart City Lighting Demo
 	</div>
 
 
-	<a class='go-back-button fa fa-caret-square-o-up fa-4x'> </a>
+	<a class='go-back-button fa fa-angle-double-up fa-3x'> </a>
 
 
 
@@ -110,7 +110,8 @@ Smart City Lighting Demo
 		dusseldorf,
 		herzog,
 		benrather,
-		currentLayers = [];
+		renderedLayers = [],
+		currentLayer;
 
 	var computeCentroid = function(e) {
 
@@ -238,6 +239,14 @@ Smart City Lighting Demo
 	};
 
 
+	var createVectorLayers = function() {
+		createCountryLayer();
+		createCityLayers();
+		createStreetLayers();
+	};
+
+
+
 	var createCountryLayer = function() {
 		germanyLayer = L.geoJson(germanyShape, {style: style });
 	};
@@ -276,7 +285,7 @@ Smart City Lighting Demo
 
 	var clearLayers = function() {
 
-		currentLayers.forEach(function(layer) {
+		renderedLayers.forEach(function(layer) {
 			map.removeLayer(layer)
 		})
 	};
@@ -311,10 +320,24 @@ Smart City Lighting Demo
 		infoColumn.css({'display':'none'})
 	};
 
+	var hideGoBackButton =function() {
+		$('.go-back-button').css({'display':'none'})
+	}
+
 	var bindBackButton = function() {
-		$('.go-back-button').on('click', renderWorldView);
+		$('.go-back-button').on('click', goLayerUp);
 	};
 
+
+
+	var goLayerUp = function() {
+
+		if (currentLayer === 'city') {
+			renderWorldView();
+		} else if(currentLayer === 'street') {
+			renderCityView();
+		} 
+	};
 
 
 	var init = function() {
@@ -326,9 +349,7 @@ Smart City Lighting Demo
 		}).addTo(map);		
 		setTimeLastVisited();
 		removeZoomControl();
-		createCountryLayer();
-		createCityLayers();
-		createStreetLayers();
+		createVectorLayers()
 		bindBackButton();
 	};
 
@@ -336,6 +357,8 @@ Smart City Lighting Demo
 
 	var renderWorldView = function() {
 
+		currentLayer = 'world';
+		hideGoBackButton()
 		hideInfoColumn();
 		clearLayers();
 		unsetZoomConstraint()
@@ -348,7 +371,7 @@ Smart City Lighting Demo
 		dusseldorf.addTo(map);
 		germanyLayer.addTo(map);
 
-		currentLayers.push(berlin, munich, dusseldorf, germanyLayer);
+		renderedLayers.push(berlin, munich, dusseldorf, germanyLayer);
 	};
 
 	var renderCityView = function(e) {
@@ -359,8 +382,9 @@ Smart City Lighting Demo
 			header = $('.info-column-header');
 
 		$('.info-column').fadeIn(200)
-		$('.go-back-button').css({'color':'white'})
+		$('.go-back-button').css({'display':'inline'})
 
+		currentLayer = 'city';
 		clearLayers();
 		unsetZoomConstraint();
 
@@ -370,6 +394,7 @@ Smart City Lighting Demo
 
 		benrather.addTo(map);
 		herzog.addTo(map);
+		renderedLayers.push(benrather,herzog)
 		toolTip.fadeOut(100)
 		header.html(e.target.info.city)
 		
@@ -385,6 +410,10 @@ Smart City Lighting Demo
 
 
 	var showBenrather = function() {
+
+
+		clearLayers();
+		currentLayer = 'street';
 
 
 		var coordinates = [
@@ -434,6 +463,8 @@ Smart City Lighting Demo
 				light.on('mouseover', onlightOver)
 				light.on('mousemove', onCityMove)
 				light.on('mouseout',  onCityOut)
+
+				renderedLayers.push(light)	
 
 			})
 
