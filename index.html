@@ -27,6 +27,12 @@ Smart City Lighting Demo
 
 	</div>
 
+
+	<div class='go-back-button'> </div>
+
+
+
+
 	<div class='info-column'>
 		<p class='info-column-header'> </p>
 		<p class="info-column-street"> <p>
@@ -49,6 +55,62 @@ Smart City Lighting Demo
 
 <script>
 
+	var
+		GLOBAL_COORDINATES = [51.1, 10],
+		GLOBAL_ZOOM = 6,
+		CITY_ZOOM = 14,
+		CITY_SIZE = 10000,
+		STREET_ZOOM = 18,
+		cityStyle = {
+			'color': '#00b04e',
+			'fillColor': '#00b04e',
+			'fillOpacity': 0.8
+		},
+		streetStyle = {
+			'color': "#ff7800", 
+			'weight': 1
+		},
+		infoBerlin = {
+			'city':'Berlin',
+			'lights':8200,
+			'on': 8183,
+			'off': 17
+		},
+		infoMunich = {
+			'city':'Munich',
+			'lights':4200,
+			'on': 4056,
+			'off': 144
+		},
+		infoDusseldorf = {
+			'city':'Düsseldorf',
+			'lights':3120,
+			'on': 3111,
+			'off': 9
+		},
+		infoBenrather = {
+			'city':'Benrather Straße',
+			'lights':12,
+			'on': 12,
+			'off': 4
+		},
+		infoHerzog = {
+			'city':'Herzogstraße',
+			'lights':12,
+			'on': 12,
+			'off': 4
+		},
+		benratherRectangle = [[51.2248, 6.77104], [51.22159, 6.78017]],
+		herzogRectangle = [[51.21736, 6.77687], [51.21396, 6.78612]],
+		germanyLayer,
+		map,
+		berlin,
+		munich,
+		dusseldorf,
+		herzog,
+		benrather,
+		currentLayers = [];
+
 	var computeCentroid = function(e) {
 
 		var 
@@ -65,6 +127,11 @@ Smart City Lighting Demo
 
 		return [lat,lng];
 
+	};
+
+
+	var removeZoomControl = function() {
+		$('.leaflet-control-container').remove()
 	};
 
 
@@ -87,7 +154,7 @@ Smart City Lighting Demo
 	};
 
 
-	var setTime = function() {
+	var setTimeLastVisited = function() {
 
 		var 
 			d = new Date(),
@@ -104,38 +171,25 @@ Smart City Lighting Demo
 	};
 
 
-	setTime();
-
-
-	var globalCoordinates = [51.1, 10];
-	var globalZoom = 6 
-
-
-	var map = L.map('map').setView(globalCoordinates, globalZoom);
-
-	L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
-	//L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
-    id: 'tburri.paf6hb5o',
-    accessToken: 'pk.eyJ1IjoidGJ1cnJpIiwiYSI6ImNpbGNranp4ZzAwNzZ3OW0yenpiZmEwY2IifQ.Aoisnn9fFWFxmoFwXbEtCg'
-	}).addTo(map);
-	$('.leaflet-control-container').remove()
-
-
-
+	var bindMouseEvents = function(obj) {
+		obj.on('mouseover', onCityOver);
+		obj.on('mousemove', onCityMove);
+		obj.on('mouseout', onCityOut);
+	};
 
 
 	var onCityOver = function(e) {
-		var info = e.target.info;
-		var toolTip = $('#toolTip') 
-		var header = $('.tool-tip-header')
-		var line = $('.tool-tip-line')
+
+		var	
+			info = e.target.info,
+			toolTip = $('#toolTip'), 
+			header = $('.tool-tip-header'),
+			line = $('.tool-tip-line');
+
 		toolTip.fadeIn(100)
 		moveToolTip(e)
-
-
 		header.html(info.city)
-		line.html('Active Lights: ' + info.on)
+		line.html('Active Lights: ' + info.on)	
 	};
 
 	var onCityMove = function(e) {
@@ -165,23 +219,6 @@ Smart City Lighting Demo
 
 
 
-	var onCityClick = function(e) {
-		var location = e.target._latlng
-		var toolTip = $('#toolTip')
-		var header = $('.info-column-header')
-
-		map.options.maxZoom = 18;
-		map.setView(location, 14)
-		map.options.minZoom = 14
-
-		map.removeLayer(e.target)
-		toolTip.fadeOut(100)
-		header.html(e.target.info.city)
-
-		showDuesseldorf();
-	};
-
-
 	var onStreetClick = function (e) {
 
 		var 
@@ -191,122 +228,154 @@ Smart City Lighting Demo
 
 		streetLabel.html(e.target.info.city)
 		toolTip.fadeOut(100)
-		map.setView(centroid, 18)
+
+		map.options.maxZoom = STREET_ZOOM;
+		map.setView(centroid, STREET_ZOOM)
+		map.options.minZoom = STREET_ZOOM;
 		map.removeLayer(e.target)
 		showBenrather();
 	};
 
 
+	var createCountryLayer = function() {
+		germanyLayer = L.geoJson(germanyShape, {style: style });
+	};
+
+
+	var createCityLayers = function() {
+		berlin = L.circle([52.529, 13.403], CITY_SIZE, cityStyle);
+		munich = L.circle([48.12, 11.6], CITY_SIZE, cityStyle);
+		dusseldorf = L.circle([51.22, 6.78], CITY_SIZE, cityStyle);
+
+		berlin.info = infoBerlin;
+		bindMouseEvents(berlin);
+
+		munich.info = infoMunich;
+		bindMouseEvents(munich);
+
+		bindMouseEvents(dusseldorf)
+		dusseldorf.on('click', renderCityView)
+		dusseldorf.info = infoDusseldorf;		
+	};
+
+
+	var createStreetLayers = function() {
+
+		benrather = L.rectangle(benratherRectangle, streetStyle);
+		benrather.on('click', onStreetClick);
+		benrather.info = infoBenrather;
+		bindMouseEvents(benrather);
+
+		herzog = L.rectangle(herzogRectangle, streetStyle);
+		herzog.on('click', onStreetClick);
+		herzog.info = infoHerzog;
+		bindMouseEvents(herzog);
+	};
+
+
+	var clearLayers = function() {
+
+		currentLayers.forEach(function(layer) {
+			map.removeLayer(layer)
+		})
+	};
+
+
+	var unsetZoomConstraint = function() {
+		map.options.maxZoom = 20;		
+		map.options.minZoom = 1;	
+	};
+
+	var setZoomConstraint = function(zoom) {
+		map.options.maxZoom = zoom;		
+		map.options.minZoom = zoom;	
+	};
+
+
 	var	style = function (feature) {
-			return {
-				weight: 2,
-				opacity: 0.7,
-				color: '#00b04e',
-				fillOpacity: 0,
-				fillColor: 'transparent',
-				pointerEvents: 'none'
-			};
-		}
-
-	var	geojson = L.geoJson(germanyShape, {
-			style: style
-		}).addTo(map);
+		return {
+			weight: 2,
+			opacity: 0.7,
+			color: '#00b04e',
+			fillOpacity: 0,
+			fillColor: '#00b04e',
+			pointerEvents: 'none'
+		};
+	};
 
 
-
-	var berlin = L.circle([52.529, 13.403], 10000, {
-	    color: '#00b04e',
-	    fillColor: '#00b04e',
-	    fillOpacity: 0.8
-	}).addTo(map);
-
-	berlin.info = {
-		'city':'Berlin',
-		'lights':8200,
-		'on': 8183,
-		'off': 17
-	}
-
-	berlin.on('mouseover', onCityOver)
-	berlin.on('mousemove', onCityMove)
-	berlin.on('mouseout', onCityOut)
-
-	var munich = L.circle([48.12, 11.6], 10000, {
-	    color: '#00b04e',
-	    fillColor: '#00b04e',
-	    fillOpacity: 0.8
-	}).addTo(map);
-
-	munich.info = {
-	'city':'Munich',
-	'lights':4200,
-	'on': 4056,
-	'off': 144
-	}
-
-	munich.on('mouseover', onCityOver)
-	munich.on('mousemove', onCityMove)
-	munich.on('mouseout', onCityOut)
-
-	var dusseldorf = L.circle([51.22, 6.78], 10000, {
-	    color: '#00b04e',
-	    fillColor: '#00b04e',
-	    fillOpacity: 0.8,
-	    info: {'peter':'paul'}
-	}).addTo(map);
-
-	dusseldorf.on('mouseover', onCityOver)
-	dusseldorf.on('mousemove', onCityMove)
-	dusseldorf.on('mouseout', onCityOut)
-	dusseldorf.on('click', onCityClick)
-
-	dusseldorf.info = {
-	'city':'Düsseldorf',
-	'lights':3120,
-	'on': 3111,
-	'off': 9
-	}
+	var hideInfoColumn = function() {
+		var infoColumn = $('.info-column')
+		infoColumn.fadeOut(200)
+		infoColumn.css({'display':'none'})
+	};
 
 
 
+	var init = function() {
+		map = L.map('map')
+		L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
+		attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
+		id: 'tburri.paf6hb5o',
+		accessToken: 'pk.eyJ1IjoidGJ1cnJpIiwiYSI6ImNpbGNranp4ZzAwNzZ3OW0yenpiZmEwY2IifQ.Aoisnn9fFWFxmoFwXbEtCg'
+		}).addTo(map);		
+		setTimeLastVisited();
+		removeZoomControl();
+		createCountryLayer();
+		createCityLayers();
+		createStreetLayers();
+	};
 
-	var showDuesseldorf = function() {
+
+
+	var renderWorldView = function() {
+
+		hideInfoColumn();
+		clearLayers();
+		unsetZoomConstraint()
+
+		map.setView(GLOBAL_COORDINATES, GLOBAL_ZOOM);
+		setZoomConstraint(GLOBAL_ZOOM);
+
+		berlin.addTo(map);
+		munich.addTo(map);
+		dusseldorf.addTo(map);
+		germanyLayer.addTo(map);
+
+		currentLayers.push(berlin, munich, dusseldorf, germanyLayer);
+	};
+
+	var renderCityView = function(e) {
+
+		var 
+			location = e.target._latlng,
+			toolTip = $('#toolTip'),
+			header = $('.info-column-header');
 
 		$('.info-column').fadeIn(200)
 
+		clearLayers();
+		unsetZoomConstraint();
 
-		var detailOne = [[51.2248, 6.77104], [51.22159, 6.78017]];
-		var benrather = L.rectangle(detailOne, {color: "#ff7800", weight: 1, }).addTo(map);
-		benrather.info = {
-		'city':'Benrather Straße',
-		'lights':12,
-		'on': 12,
-		'off': 4
-		}
+		map.setView(location, CITY_ZOOM);
+		setZoomConstraint(CITY_ZOOM);
+		
 
-		benrather.on('click', onStreetClick)
-		benrather.on('mouseover', onCityOver)
-		benrather.on('mousemove', onCityMove)
-		benrather.on('mouseout', onCityOut)
+		benrather.addTo(map);
+		herzog.addTo(map);
+		toolTip.fadeOut(100)
+		header.html(e.target.info.city)
+		
+	};
 
 
-		var detailTwo = [[51.21736, 6.77687], [51.21396, 6.78612]];
-		var herzog = L.rectangle(detailTwo, {color: "#ff7800", weight: 1, }).addTo(map);
-		herzog.info = {
-		'city':'Herzogstraße',
-		'lights':12,
-		'on': 12,
-		'off': 4
-		}
-
-		herzog.on('click', onStreetClick)
-		herzog.on('mouseover', onCityOver)
-		herzog.on('mousemove', onCityMove)
-		herzog.on('mouseout', onCityOut)
+	init();
+	renderWorldView();
 
 
 
-	}
+
+
 
 	var showBenrather = function() {
 
@@ -344,9 +413,9 @@ Smart City Lighting Demo
 
 
 			var light = L.circle(coordinate, 2, {
-			    color: color,
-			    fillColor: color,
-			    fillOpacity: 0.8
+				color: color,
+				fillColor: color,
+				fillOpacity: 0.8
 			}).addTo(map)
 
 				light.info = {
@@ -377,10 +446,10 @@ Smart City Lighting Demo
 
 
 	function onMapClick(e) {
-	    popup
-	        .setLatLng(e.latlng)
-	        .setContent("You clicked the map at " + e.latlng.toString())
-	        .openOn(map);
+		popup
+			.setLatLng(e.latlng)
+			.setContent("You clicked the map at " + e.latlng.toString())
+			.openOn(map);
 	}
 
 
@@ -394,3 +463,5 @@ Smart City Lighting Demo
 </body>
 
 </html>
+
+
