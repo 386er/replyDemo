@@ -153,6 +153,7 @@ Smart City Lighting Demo
 		renderedLayers = [],
 		currentLayer,
 		currentlySelectedLayer,
+		reportClickEventBound = false,
 		countRed = 0,
 		countGreen = 0,
 		overAllcount = 0;
@@ -407,11 +408,23 @@ Smart City Lighting Demo
 	};
 
 
-	var hideGoBackButton =function() {
+	var hideGoBackButton = function() {
 		if (currentLayer === 'world') {
 			$('.go-back-button').css({'display':'none'})
 		}
 	};
+
+	var bindClickEvents = function() {
+		bindBackButton()
+		map.on('click', onMapClick);
+		$('.report-button').on('click', function() {
+			if (currentlySelectedLayer !== undefined) {
+				$('.report-message').fadeIn(0)
+				$('.report-message').fadeOut(3500)
+				reportClickEventBound = true;
+			}
+		});
+	}
 
 
 	var bindBackButton = function() {
@@ -448,7 +461,8 @@ Smart City Lighting Demo
 		setTimeLastVisited();
 		removeZoomControl();
 		createVectorLayers()
-		bindBackButton();
+		bindClickEvents();
+
 
 		renderWorldView();
 	};
@@ -531,13 +545,6 @@ Smart City Lighting Demo
 			$('.green-info').html('Functional Lights ' + countGreen);
 			$('.red-info').html('Disfunctional Lights: ' + countRed);
 			reportButton.fadeIn(100);
-			reportButton.on('click', function() {
-				if (currentlySelectedLayer !== undefined) {
-					$('.report-message').fadeIn(0)
-					$('.report-message').fadeOut(3500)
-				}
-			})
-
 		}
 	};
 
@@ -565,9 +572,6 @@ Smart City Lighting Demo
 		populateInfoColumn(streetName);
 	};
 
-	
-	init();
-
 
 	var unSelectLight = function() {
 		if (currentlySelectedLayer !== undefined) {
@@ -578,11 +582,14 @@ Smart City Lighting Demo
 	}
 
 
-
-
 	var onMapClick = function() {
 		unSelectLight();
 	};
+	
+	init();
+
+
+
 	/*
 	var popup = L.popup();
 	function onMapClick(e) {
@@ -591,7 +598,7 @@ Smart City Lighting Demo
 			.setContent("You clicked the map at " + e.latlng.toString())
 			.openOn(map);
 	} */
-	map.on('click', onMapClick);
+
 
 
 
