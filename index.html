@@ -59,6 +59,7 @@ Smart City Lighting Demo
 	var
 		GLOBAL_COORDINATES = [51.1, 10],
 		GLOBAL_ZOOM = 6,
+		CITY_COORDINATES = [51.22, 6.78],
 		CITY_ZOOM = 14,
 		CITY_SIZE = 10000,
 		STREET_ZOOM = 18,
@@ -66,6 +67,14 @@ Smart City Lighting Demo
 			'color': '#00b04e',
 			'fillColor': '#00b04e',
 			'fillOpacity': 0.8
+		},
+		styleGermanyLayer = {
+			weight: 2,
+			opacity: 0.7,
+			color: '#00b04e',
+			fillOpacity: 0,
+			fillColor: '#00b04e',
+			pointerEvents: 'none'
 		},
 		streetStyle = {
 			'color': "#ff7800", 
@@ -75,34 +84,57 @@ Smart City Lighting Demo
 			'city':'Berlin',
 			'lights':8200,
 			'on': 8183,
-			'off': 17
+			'off': 17,
+			'type': 'city'
 		},
 		infoMunich = {
 			'city':'Munich',
 			'lights':4200,
 			'on': 4056,
-			'off': 144
+			'off': 144,
+			'type': 'city'
 		},
 		infoDusseldorf = {
 			'city':'Düsseldorf',
 			'lights':3120,
 			'on': 3111,
-			'off': 9
+			'off': 9,
+			'type': 'city'
 		},
 		infoBenrather = {
 			'city':'Benrather Straße',
 			'lights':12,
 			'on': 12,
-			'off': 4
+			'off': 4,
+			'type': 'city'
 		},
 		infoHerzog = {
 			'city':'Herzogstraße',
 			'lights':12,
 			'on': 12,
-			'off': 4
+			'off': 4,
+			'type': 'city'
 		},
 		benratherRectangle = [[51.2248, 6.77104], [51.22159, 6.78017]],
 		herzogRectangle = [[51.21736, 6.77687], [51.21396, 6.78612]],
+		lampsBenrather = [
+			[51.22322, 6.77551], 
+			[51.22340, 6.77551],
+			[51.22358, 6.77551],
+			[51.22376, 6.77551],
+			[51.22394, 6.77551],
+			[51.22412, 6.77551],
+			[51.22431, 6.77551],
+			[51.22315, 6.77436],
+			[51.22315, 6.77463],
+			[51.22315, 6.77485],
+			[51.22315, 6.77505],
+			[51.22315, 6.77525],
+		],
+		lampsHerzog = [
+			[51.21565, 6.78044], 
+			[51.21565, 6.78067],
+		],	
 		germanyLayer,
 		map,
 		berlin,
@@ -135,7 +167,6 @@ Smart City Lighting Demo
 	var removeZoomControl = function() {
 		$('.leaflet-control-container').remove()
 	};
-
 
 
 	var moveToolTip = function(e, reset) {
@@ -194,6 +225,7 @@ Smart City Lighting Demo
 		line.html('Active Lights: ' + info.on)	
 	};
 
+
 	var onCityMove = function(e) {
 		moveToolTip(e);
 	};
@@ -220,25 +252,6 @@ Smart City Lighting Demo
 	};
 
 
-
-	var onStreetClick = function (e) {
-
-		var 
-			streetLabel = $('.info-column-street'),
-			toolTip = $('#toolTip'),
-			centroid = computeCentroid(e);
-
-		streetLabel.html(e.target.info.city)
-		toolTip.fadeOut(100)
-
-		map.options.maxZoom = STREET_ZOOM;
-		map.setView(centroid, STREET_ZOOM)
-		map.options.minZoom = STREET_ZOOM;
-		map.removeLayer(e.target)
-		showBenrather();
-	};
-
-
 	var createVectorLayers = function() {
 		createCountryLayer();
 		createCityLayers();
@@ -247,15 +260,16 @@ Smart City Lighting Demo
 
 
 
+
 	var createCountryLayer = function() {
-		germanyLayer = L.geoJson(germanyShape, {style: style });
+		germanyLayer = L.geoJson(germanyShape, {style: styleGermanyLayer });
 	};
 
 
 	var createCityLayers = function() {
 		berlin = L.circle([52.529, 13.403], CITY_SIZE, cityStyle);
 		munich = L.circle([48.12, 11.6], CITY_SIZE, cityStyle);
-		dusseldorf = L.circle([51.22, 6.78], CITY_SIZE, cityStyle);
+		dusseldorf = L.circle(CITY_COORDINATES, CITY_SIZE, cityStyle);
 
 		berlin.info = infoBerlin;
 		bindMouseEvents(berlin);
@@ -272,22 +286,40 @@ Smart City Lighting Demo
 	var createStreetLayers = function() {
 
 		benrather = L.rectangle(benratherRectangle, streetStyle);
-		benrather.on('click', onStreetClick);
+		benrather.on('click', renderStreetView);
 		benrather.info = infoBenrather;
 		bindMouseEvents(benrather);
 
 		herzog = L.rectangle(herzogRectangle, streetStyle);
-		herzog.on('click', onStreetClick);
+		herzog.on('click', renderStreetView);
 		herzog.info = infoHerzog;
 		bindMouseEvents(herzog);
 	};
 
 
-	var clearLayers = function() {
-
+	var clearView = function() {
+		hideToolTip();
+		unsetZoomConstraint();
+		emptyInfoColumn();
 		renderedLayers.forEach(function(layer) {
 			map.removeLayer(layer)
 		})
+	};
+
+
+	var emptyInfoColumn = function() {
+
+		var 
+			header = $('.info-column-header'),
+			street = $('.info-column-street'),
+			count = $('.info-column-count-overall'),
+			lampWrapper = $('#lampwrapper');
+
+		header.html('');
+		street.html('');
+		count.html('');
+		lampWrapper.fadeOut();
+		lampWrapper.css({'display':'none'});
 	};
 
 
@@ -296,22 +328,18 @@ Smart City Lighting Demo
 		map.options.minZoom = 1;	
 	};
 
+
 	var setZoomConstraint = function(zoom) {
 		map.options.maxZoom = zoom;		
 		map.options.minZoom = zoom;	
 	};
 
 
-	var	style = function (feature) {
-		return {
-			weight: 2,
-			opacity: 0.7,
-			color: '#00b04e',
-			fillOpacity: 0,
-			fillColor: '#00b04e',
-			pointerEvents: 'none'
-		};
-	};
+	var hideToolTip = function() {
+		var toolTip = $('#toolTip');
+		toolTip.fadeOut(0);
+		toolTip.css({'display':'none'});
+	}
 
 
 	var hideInfoColumn = function() {
@@ -320,9 +348,11 @@ Smart City Lighting Demo
 		infoColumn.css({'display':'none'})
 	};
 
+
 	var hideGoBackButton =function() {
 		$('.go-back-button').css({'display':'none'})
 	}
+
 
 	var bindBackButton = function() {
 		$('.go-back-button').on('click', goLayerUp);
@@ -358,10 +388,10 @@ Smart City Lighting Demo
 	var renderWorldView = function() {
 
 		currentLayer = 'world';
-		hideGoBackButton()
+		hideGoBackButton();
 		hideInfoColumn();
-		clearLayers();
-		unsetZoomConstraint()
+
+		clearView();
 
 		map.setView(GLOBAL_COORDINATES, GLOBAL_ZOOM);
 		setZoomConstraint(GLOBAL_ZOOM);
@@ -374,77 +404,65 @@ Smart City Lighting Demo
 		renderedLayers.push(berlin, munich, dusseldorf, germanyLayer);
 	};
 
-	var renderCityView = function(e) {
+	var renderCityView = function() {
 
-		var 
-			location = e.target._latlng,
-			toolTip = $('#toolTip'),
-			header = $('.info-column-header');
+		var header = $('.info-column-header');
 
 		$('.info-column').fadeIn(200)
 		$('.go-back-button').css({'display':'inline'})
 
 		currentLayer = 'city';
-		clearLayers();
-		unsetZoomConstraint();
 
-		map.setView(location, CITY_ZOOM);
+		clearView();
+
+
+		map.setView(CITY_COORDINATES, CITY_ZOOM);
 		setZoomConstraint(CITY_ZOOM);
 		
 
 		benrather.addTo(map);
 		herzog.addTo(map);
-		renderedLayers.push(benrather,herzog)
-		toolTip.fadeOut(100)
-		header.html(e.target.info.city)
+		renderedLayers.push(benrather,herzog);
+		header.html('Düsseldorf')
 		
 	};
 
 
-	init();
-	renderWorldView();
+	var renderStreetView = function(e) {
 
+		var 
+			header = $('.info-column-header'),
+			streetLabel = $('.info-column-street'),
+			toolTip = $('#toolTip'),
+			centroid = computeCentroid(e), 
+			ranNum,
+			streetName = e.target.info.city,
+			color,
+			lightContainer = [],
+			countRed = 0,
+			countGreen = 0,
+			lamps;
 
+			if (streetName === 'Benrather Straße') {
+				lamps = lampsBenrather;
+			} else {
+				lamps = lampsHerzog;
+			}
+			overAllcount = lamps.length;
 
-
-
-
-	var showBenrather = function() {
-
-
-		clearLayers();
+		clearView();
 		currentLayer = 'street';
 
-
-		var coordinates = [
-						[51.22322, 6.77551], 
-						[51.22340, 6.77551],
-						[51.22358, 6.77551],
-						[51.22376, 6.77551],
-						[51.22394, 6.77551],
-						[51.22412, 6.77551],
-						[51.22431, 6.77551],
-						[51.22315, 6.77436],
-						[51.22315, 6.77463],
-						[51.22315, 6.77485],
-						[51.22315, 6.77505],
-						[51.22315, 6.77525],
-						];	
-						
-		lightContainer = []
-		countRed = 0;
-		countGreen = 0;
-		overAllcount = coordinates.length;
+		map.setView(centroid, STREET_ZOOM);
+		setZoomConstraint(STREET_ZOOM);
+		header.html('Düsseldorf');
+		streetLabel.html(streetName);
 
 
+		lamps.forEach( function(coordinate, i) {
 
-
-		coordinates.forEach( function(coordinate, i) {
-
-			var ranNum = Math.random();
-
-			var color = ranNum > 0.25 ? '#00b04e' : 'red';
-
+			ranNum = Math.random();
+			color = ranNum > 0.25 ? '#00b04e' : 'red';
 			ranNum > 0.25 ? countGreen++ : countRed++;
 
 
@@ -455,42 +473,37 @@ Smart City Lighting Demo
 			}).addTo(map)
 
 				light.info = {
-					'id': (3224392 + i ), 
+					'city': (3224392 + i ), 
 					'day': 'Daylight',
-					'state': (color === 'red') ? 'ON' : 'OFF'
+					'state': (color === 'red') ? 'ON' : 'OFF',
+					'type': 'light'
 				}
 
-				light.on('mouseover', onlightOver)
-				light.on('mousemove', onCityMove)
-				light.on('mouseout',  onCityOut)
-
-				renderedLayers.push(light)	
-
+				bindMouseEvents(light);
+				renderedLayers.push(light);	
 			})
 
 
 		$('.info-column-count-overall').html('Number of Lights: ' + overAllcount);
 		$('#lampwrapper').fadeIn(100);
-		$('.green-info').html('Functional Lights ' + countGreen)
-		$('.red-info').html('Disfunctional Lights: ' + countRed)
-
+		$('.green-info').html('Functional Lights ' + countGreen);
+		$('.red-info').html('Disfunctional Lights: ' + countRed);
 	}
+	
+	init();
+	renderWorldView();
+
+
 
 
 
 	var popup = L.popup();
-
-
-
-
 	function onMapClick(e) {
 		popup
 			.setLatLng(e.latlng)
 			.setContent("You clicked the map at " + e.latlng.toString())
 			.openOn(map);
 	}
-
-
 	map.on('click', onMapClick);
 
 
