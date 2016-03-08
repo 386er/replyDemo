@@ -7,6 +7,7 @@
 <script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
 <script src="http://underscorejs.org/underscore.js"></script>
 <script type="text/javascript" src="germany.js"></script>
+<script src="http://fgnass.github.io/spin.js/spin.min.js"></script>
 <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.css"/>
 <link rel="stylesheet" href="style.css" />
 <link href='https://fonts.googleapis.com/css?family=Exo+2|Open+Sans' rel='stylesheet' type='text/css'>
@@ -104,51 +105,47 @@ Smart City Lighting Demo
 		},
 		infoDusseldorf = {
 			'city':'Düsseldorf',
-			'lights':3120,
-			'on': 3111,
+			'lights':8,
+			'on': 8,
 			'off': 9,
 			'type': 'city'
 		},
 		infoBenrather = {
 			'city':'Benrather Straße',
-			'lights':12,
-			'on': 12,
+			'lights':8,
+			'on': 8,
 			'off': 4,
 			'type': 'street'
 		},
-		infoHerzog = {
+	/*	infoHerzog = {
 			'city':'Herzogstraße',
 			'lights':12,
 			'on': 12,
 			'off': 4,
 			'type': 'street'
-		},
+		},*/
 		benratherRectangle = [[51.2248, 6.77104], [51.22159, 6.78017]],
-		herzogRectangle = [[51.21736, 6.77687], [51.21396, 6.78612]],
+	/*	herzogRectangle = [[51.21736, 6.77687], [51.21396, 6.78612]], */
 		lightsBenrather = [
-			[51.22322, 6.77551], 
-			[51.22340, 6.77551],
-			[51.22358, 6.77551],
-			[51.22376, 6.77551],
-			[51.22394, 6.77551],
-			[51.22412, 6.77551],
-			[51.22431, 6.77551],
-			[51.22315, 6.77436],
-			[51.22315, 6.77463],
-			[51.22315, 6.77485],
-			[51.22315, 6.77505],
-			[51.22315, 6.77525],
+			[51.223175, 6.77436],
+			[51.223175, 6.77473],
+			[51.223175, 6.77504],
+			[51.223175, 6.77539],
+			[51.223025, 6.77436],
+			[51.223025, 6.77473],
+			[51.223025, 6.77504],
+			[51.223025, 6.77539],
 		],
-		lightsHerzog = [
+	/*	lightsHerzog = [
 			[51.21565, 6.78044], 
 			[51.21565, 6.78067],
-		],	
+		], */	
 		germanyLayer,
 		map,
 		berlin,
 		munich,
 		dusseldorf,
-		herzog,
+	//	herzog,
 		benrather,
 		renderedLayers = [],
 		currentLayer,
@@ -156,7 +153,17 @@ Smart City Lighting Demo
 		reportClickEventBound = false,
 		countRed = 0,
 		countGreen = 0,
-		overAllcount = 0;
+		overAllcount = 0,
+		ws,
+		lampData,
+		spinnerOptions = {
+				'color': '#00b04e',
+				'width': 2
+			},
+		spinner = new Spinner(spinnerOptions),
+		target = $('#map');
+		
+
 
 	var computeCentroid = function(e) {
 
@@ -245,7 +252,7 @@ Smart City Lighting Demo
 			header = $('.tool-tip-header'),
 			line = $('.tool-tip-line'),
 			type = info.type,
-			toolTipMessage = (type === 'light') ? 'Daylight - Status: ' + info.state :  'Active Lights: ' + info.on;
+			toolTipMessage = (type === 'light') ? info.day + ' - Status: '  + info.state :  'Active Lights: ' + info.on;
 
 		toolTip.fadeIn(100)
 		moveToolTip(e)
@@ -317,15 +324,15 @@ Smart City Lighting Demo
 	};
 
 
-	var createStreetLayers = function() {
+	var createStreetLayers =function() {
 
 		benrather = L.rectangle(benratherRectangle, streetStyle);
 		benrather.info = infoBenrather;
 		bindMouseEvents(benrather);
 
-		herzog = L.rectangle(herzogRectangle, streetStyle);
+/*		herzog = L.rectangle(herzogRectangle, streetStyle);
 		herzog.info = infoHerzog;
-		bindMouseEvents(herzog);
+		bindMouseEvents(herzog); */
 	};
 
 
@@ -409,7 +416,7 @@ Smart City Lighting Demo
 
 
 	var hideGoBackButton = function() {
-		if (currentLayer === 'world') {
+		if (currentLayer === 'world' || currentLayer === undefined) {
 			$('.go-back-button').css({'display':'none'})
 		}
 	};
@@ -452,7 +459,9 @@ Smart City Lighting Demo
 
 
 	var init = function() {
-		map = L.map('map')
+
+		ws = new WebSocket("ws://nodered.reply-live.de/ws/test");
+		map = L.map('map');
 		L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
 		attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
 		id: 'tburri.paf6hb5o',
@@ -462,10 +471,39 @@ Smart City Lighting Demo
 		removeZoomControl();
 		createVectorLayers()
 		bindClickEvents();
-
-
-		renderWorldView();
+		//renderWorldView();
+		bindWebSocketEvents();	
 	};
+
+	var bindWebSocketEvents = function() {
+
+		ws.onopen = function() {
+			console.log('Socket was opened!');
+			ws.send('getall')
+		}
+
+		ws.onmessage = function(evt) {
+
+			if (lampData === undefined) {
+				hideGoBackButton();
+				lampData = JSON.parse(evt.data);
+				console.log(lampData);
+				spinner.stop();
+				renderWorldView();
+			} else {
+				console.log('Light data was updated!')
+				lampData = JSON.parse(evt.data);
+				if (currentLayer === 'street') {
+					clearView();
+					enableControls();
+					lightsBenrather.forEach(addLightToLayer)
+					populateInfoColumn('Benrather');
+					console.log('Streetview was updated!')
+				}
+			}
+		}
+	}
+
 
 
 
@@ -496,8 +534,9 @@ Smart City Lighting Demo
 		setZoomConstraint(CITY_ZOOM);
 		
 		benrather.addTo(map);
-		herzog.addTo(map);
-		renderedLayers.push(benrather,herzog);
+	//	herzog.addTo(map);
+	//	renderedLayers.push(benrather,herzog);
+		renderedLayers.push(benrather);
 		populateInfoColumn();
 	};
 
@@ -506,22 +545,24 @@ Smart City Lighting Demo
 
 		var 
 			ranNum = Math.random(),
-			color = ranNum > 0.25 ? '#00b04e' : 'red',
+			color = lampData[i]['envior_status'] !== lampData[i]['lamp_status'] ? '#00b04e' : 'red',
 			light = L.circle(coordinates, 2, {
 				color: color,
 				fillColor: color,
 				fillOpacity: 0.8
 			}).addTo(map);
 
+
 		light.info = {
-			'city': (3224392 + i ), 
-			'day': 'Daylight',
-			'state': (color === 'red') ? 'ON' : 'OFF',
+			'city': lampData[i]['gateway_id'].substring(0,6) + lampData[i]['lamp_id'] , 
+			'day': lampData[i]['envior_status'] === '1' ? 'Daylight':'No Daylight',
+			'state': lampData[i]['lamp_status'] === '1' ? 'ON' : 'OFF',
 			'type': 'light',
 			'color': color
 		}
 
-		ranNum > 0.25 ? countGreen++ : countRed++;
+
+		lampData[i]['envior_status'] === lampData[i]['lamp_status'] ? countGreen++ : countRed++;
 		overAllcount++;
 		bindMouseEvents(light);
 		renderedLayers.push(light);
@@ -558,10 +599,11 @@ Smart City Lighting Demo
 
 			if (streetName === 'Benrather Straße') {
 				lights = lightsBenrather;
-			} else {
+			}	
+/*			} else {
 				lights = lightsHerzog;
 			}
-
+*/
 		currentLayer = 'street';
 		clearView();
 		enableControls();
@@ -585,7 +627,10 @@ Smart City Lighting Demo
 	var onMapClick = function() {
 		unSelectLight();
 	};
+
 	
+	spinner.spin();
+	target.append(spinner.el);
 	init();
 
 
