@@ -7,6 +7,7 @@
 <script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
 <script src="http://underscorejs.org/underscore.js"></script>
 <script type="text/javascript" src="germany.js"></script>
+<script type="text/javascript" src="italy.js"></script>
 <script src="http://fgnass.github.io/spin.js/spin.min.js"></script>
 <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.css"/>
 <link rel="stylesheet" href="style.css" />
@@ -66,9 +67,9 @@ Smart City Lighting Demo
 <script>
 
 	var
-		GLOBAL_COORDINATES = [51.1, 10],
+		GLOBAL_COORDINATES = [41.37, 12.2],
 		GLOBAL_ZOOM = 6,
-		CITY_COORDINATES = [51.22, 6.78],
+		CITY_COORDINATES = [41.928, 12.475],
 		CITY_ZOOM = 14,
 		CITY_SIZE = 10000,
 		STREET_ZOOM = 18,
@@ -77,7 +78,7 @@ Smart City Lighting Demo
 			'fillColor': '#00b04e',
 			'fillOpacity': 0.8
 		},
-		styleGermanyLayer = {
+		styleItalyLayer = {
 			weight: 2,
 			opacity: 0.7,
 			color: '#00b04e',
@@ -89,54 +90,55 @@ Smart City Lighting Demo
 			'color': "#ff7800", 
 			'weight': 1
 		},
-		infoBerlin = {
-			'city':'Berlin',
+		infoMilan = {
+			'city':'Milan',
 			'lights':8200,
 			'on': 8183,
 			'off': 17,
 			'type': 'city'
 		},
-		infoMunich = {
-			'city':'Munich',
+		infoFlorence = {
+			'city':'Florence',
 			'lights':4200,
 			'on': 4056,
 			'off': 144,
 			'type': 'city'
 		},
-		infoDusseldorf = {
-			'city':'Düsseldorf',
+		infoRome = {
+			'city':'Rome',
 			'lights':8,
 			'on': 8,
 			'off': 9,
 			'type': 'city'
 		},
-		infoBenrather = {
-			'city':'Benrather Straße',
+		infoGuidoReni = {
+			'city':'Via Guido Reni',
 			'lights':8,
 			'on': 8,
 			'off': 4,
 			'type': 'street'
 		},
-		benratherRectangle = [[51.2248, 6.77104], [51.22159, 6.78017]],
-		lightsBenrather = [
-			[51.223175, 6.77436],
-			[51.223175, 6.77473],
-			[51.223175, 6.77504],
-			[51.223175, 6.77539],
-			[51.223025, 6.77436],
-			[51.223025, 6.77473],
-			[51.223025, 6.77504],
-			[51.223025, 6.77539],
+		guidoReniRectangle = [[41.929, 12.463], [41.927, 12.4705]],
+		lights = [
+			[41.92782, 12.46522],
+			[41.92762, 12.46530],
+			[41.92794, 12.46576],
+			[41.92774, 12.46585],
+			[41.92807, 12.46633],
+			[41.92788, 12.46641],
+			[41.92821, 12.4669],
+			[41.92802, 12.467],
 		],
-		germanyLayer,
+		italyLayer,
 		map,
-		berlin,
-		munich,
-		dusseldorf,
-		benrather,
+		Milan,
+		Florence,
+		Rome,
+		guidoReni,
 		renderedLayers = [],
 		currentLayer,
-		currentlySelectedLayer,
+		currentlySelectedLightEvent,
+		currentlySelectedLight,
 		reportClickEventBound = false,
 		countRed = 0,
 		countGreen = 0,
@@ -216,7 +218,7 @@ Smart City Lighting Demo
 		obj.on('mousemove', onMouseMove);
 		obj.on('mouseout', onMouseOut);
 
-		if (obj.info.city === 'Düsseldorf') {
+		if (obj.info.city === 'Rome') {
 			obj.on('click', renderCityView)
 		}
 
@@ -272,7 +274,8 @@ Smart City Lighting Demo
 			info = e.target.info;
 
 			unSelectLight();
-			currentlySelectedLayer = e.target;
+			currentlySelectedLightEvent = e;
+			currentlySelectedLight = e.target;
 			e.target.setStyle({'fillColor':'white'})
 			header.html('Light Details')
 			id.html('Selected light ID: ' + info.city);
@@ -291,30 +294,30 @@ Smart City Lighting Demo
 
 
 	var createCountryLayer = function() {
-		germanyLayer = L.geoJson(germanyShape, {style: styleGermanyLayer });
+		italyLayer = L.geoJson(italyShape, {style: styleItalyLayer });
 	};
 
 
 	var createCityLayers = function() {
-		berlin = L.circle([52.529, 13.403], CITY_SIZE, cityStyle);
-		munich = L.circle([48.12, 11.6], CITY_SIZE, cityStyle);
-		dusseldorf = L.circle(CITY_COORDINATES, CITY_SIZE, cityStyle);
+		Milan = L.circle([45.46, 9.18], CITY_SIZE, cityStyle);
+		Florence = L.circle([43.77, 11.22], CITY_SIZE, cityStyle);
+		Rome = L.circle(CITY_COORDINATES, CITY_SIZE, cityStyle);
 
-		berlin.info = infoBerlin;
-		bindMouseEvents(berlin);
+		Milan.info = infoMilan;
+		bindMouseEvents(Milan);
 
-		munich.info = infoMunich;
-		bindMouseEvents(munich);
+		Florence.info = infoFlorence;
+		bindMouseEvents(Florence);
 
-		dusseldorf.info = infoDusseldorf;		
-		bindMouseEvents(dusseldorf)
+		Rome.info = infoRome;		
+		bindMouseEvents(Rome)
 	};
 
 
 	var createStreetLayers =function() {
-		benrather = L.rectangle(benratherRectangle, streetStyle);
-		benrather.info = infoBenrather;
-		bindMouseEvents(benrather);
+		guidoReni = L.rectangle(guidoReniRectangle, streetStyle);
+		guidoReni.info = infoGuidoReni;
+		bindMouseEvents(guidoReni);
 	};
 
 
@@ -325,10 +328,17 @@ Smart City Lighting Demo
 		resetLightCount();
 		hideToolTip();
 		unsetZoomConstraint();
+		removeLayers();
+	};
+
+
+
+	var removeLayers = function() {
 		renderedLayers.forEach(function(layer) {
 			map.removeLayer(layer)
 		})
 	};
+
 
 
 	var resetLightCount = function() {
@@ -407,7 +417,7 @@ Smart City Lighting Demo
 		bindBackButton()
 		map.on('click', onMapClick);
 		$('.report-button').on('click', function() {
-			if (currentlySelectedLayer !== undefined) {
+			if (currentlySelectedLight !== undefined) {
 				$('.report-message').fadeIn(0)
 				$('.report-message').fadeOut(3500)
 				reportClickEventBound = true;
@@ -453,7 +463,6 @@ Smart City Lighting Demo
 		removeZoomControl();
 		createVectorLayers()
 		bindClickEvents();
-		//renderWorldView();
 		bindWebSocketEvents();	
 	};
 
@@ -476,11 +485,19 @@ Smart City Lighting Demo
 				console.log('Light data was updated!')
 				lampData = JSON.parse(evt.data);
 				if (currentLayer === 'street') {
-					clearView();
+					emptyInfoColumn();
+					resetLightCount();
+					hideToolTip();
+					unsetZoomConstraint();
+					removeLayers();
 					enableControls();
-					lightsBenrather.forEach(addLightToLayer)
-					populateInfoColumn('Benrather');
+					lights.forEach(addLightToLayer)
+					populateInfoColumn('Via Guido Reni');
 					console.log('Streetview was updated!')
+				//	if (currentlySelectedLight !== undefined) {
+				//		debugger;
+				//		showLightDetails(currentlySelectedLightEvent);	
+				//	}
 				}
 			}
 		}
@@ -497,12 +514,12 @@ Smart City Lighting Demo
 		map.setView(GLOBAL_COORDINATES, GLOBAL_ZOOM);
 		setZoomConstraint(GLOBAL_ZOOM);
 
-		berlin.addTo(map);
-		munich.addTo(map);
-		dusseldorf.addTo(map);
-		germanyLayer.addTo(map);
+		Milan.addTo(map);
+		Florence.addTo(map);
+		Rome.addTo(map);
+		italyLayer.addTo(map);
 
-		renderedLayers.push(berlin, munich, dusseldorf, germanyLayer);
+		renderedLayers.push(Milan, Florence, Rome, italyLayer);
 	};
 
 
@@ -515,8 +532,8 @@ Smart City Lighting Demo
 		map.setView(CITY_COORDINATES, CITY_ZOOM);
 		setZoomConstraint(CITY_ZOOM);
 		
-		benrather.addTo(map);
-		renderedLayers.push(benrather);
+		guidoReni.addTo(map);
+		renderedLayers.push(guidoReni);
 		populateInfoColumn();
 	};
 
@@ -525,24 +542,30 @@ Smart City Lighting Demo
 
 		var 
 			ranNum = Math.random(),
-			color = lampData[i]['envior_status'] !== lampData[i]['lamp_status'] ? '#00b04e' : 'red',
-			light = L.circle(coordinates, 2, {
-				color: color,
+			lampStatus = lampData[i]['lamp_status'],
+			environment = lampData[i]['envior_status'],
+			color = environment !== lampStatus ?
+				(lampStatus === '1' ? '#00b04e':'#003a1a') : 
+				(lampStatus === '1' ? 'red': '#4f0000'),
+			light = L.circle(coordinates, 3, {
+				color: 'white',
 				fillColor: color,
-				fillOpacity: 0.8
+				fillOpacity: 0.8,
+				weight: 0.5,
+				className: lampData[i]['gateway_id'].substring(0,6) + lampData[i]['lamp_id']
 			}).addTo(map);
 
 
 		light.info = {
 			'city': lampData[i]['gateway_id'].substring(0,6) + lampData[i]['lamp_id'] , 
-			'day': lampData[i]['envior_status'] === '1' ? 'Daylight':'No Daylight',
-			'state': lampData[i]['lamp_status'] === '1' ? 'ON' : 'OFF',
+			'day': environment === '1' ? 'Daylight':'No Daylight',
+			'state': lampStatus === '1' ? 'ON' : 'OFF',
 			'type': 'light',
 			'color': color
 		}
 
 
-		lampData[i]['envior_status'] === lampData[i]['lamp_status'] ? countGreen++ : countRed++;
+		lampData[i]['envior_status'] !== lampData[i]['lamp_status'] ? countGreen++ : countRed++;
 		overAllcount++;
 		bindMouseEvents(light);
 		renderedLayers.push(light);
@@ -556,16 +579,16 @@ Smart City Lighting Demo
 			reportButton = $('.report-button');
 
 		if (currentLayer === 'city') {
-			header.html('Düsseldorf');
+			header.html('Rome');
 		} else if (currentLayer === 'street') {
-			header.html('Düsseldorf');
+			header.html('Rome');
 			streetLabel.html(streetName);
 			$('.info-column-count-overall').html('Number of Lights: ' + overAllcount);
-			$('#lampwrapper').fadeIn(100);
-			$('.light-details').fadeIn(100);
+			$('#lampwrapper').fadeIn(0);
+			$('.light-details').fadeIn(0);
 			$('.green-info').html('Functional Lights ' + countGreen);
 			$('.red-info').html('Disfunctional Lights: ' + countRed);
-			reportButton.fadeIn(100);
+			reportButton.fadeIn(0);
 		}
 	};
 
@@ -574,12 +597,7 @@ Smart City Lighting Demo
 
 		var 
 			centroid = computeCentroid(e), 
-			streetName = e.target.info.city,
-			lights;
-
-			if (streetName === 'Benrather Straße') {
-				lights = lightsBenrather;
-			}	
+			streetName = e.target.info.city;
 
 		currentLayer = 'street';
 		clearView();
@@ -593,32 +611,30 @@ Smart City Lighting Demo
 
 
 	var unSelectLight = function() {
-		if (currentlySelectedLayer !== undefined) {
+		if (currentlySelectedLight !== undefined) {
 			emptyLightDetails();
-			currentlySelectedLayer.setStyle({'fillColor':currentlySelectedLayer.info.color})
-			currentlySelectedLayer = undefined;
+			currentlySelectedLight.setStyle({'fillColor':currentlySelectedLight.info.color})
+			currentlySelectedLight = undefined;
+			currentlySelectedLightEvent = undefined;
 		}
 	}
 
 
-	var onMapClick = function() {
+	var onMapClick = function(e) {
 		unSelectLight();
+	/*	popup
+			.setLatLng(e.latlng)
+			.setContent("You clicked the map at " + e.latlng.toString())
+			.openOn(map);
+	*/	
 	};
 
 	
+	var popup = L.popup();
 	spinner.spin();
 	target.append(spinner.el);
 	init();
 
-
-	/*
-	var popup = L.popup();
-	function onMapClick(e) {
-		popup
-			.setLatLng(e.latlng)
-			.setContent("You clicked the map at " + e.latlng.toString())
-			.openOn(map);
-	} */
 
 
 
