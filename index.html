@@ -23,13 +23,28 @@ Smart City Lighting Demo
 
 
 	<div class='header'> 
-				<div class='head-line'>  SMART CITY LIGHTING </div>
-				<div class= 'last-updated'> </div>
+				<div class='tab-wrapper'>
+				<div class='smart-city-lighting first-element selected-tab tab'>  SMART CITY LIGHTING </div>
+				<div class="smart-city-dashboard tab"> DASHBOARD</div>
+				<div class="smart-city-analytics tab"> PREDICTIVE ANALYTICS</div>
+				<div>
+				<!--<div class= 'last-updated'> </div> -->
 				<div class='image-container'> <img alt="Reply Logo" src="replyLogo.png" height="65" width="65"></div>
 	</div>
 
 
 	<a class='go-back-button fa fa-angle-double-up fa-3x'> </a>
+
+
+
+  <div id='toolTip'>
+		<p class="tool-tip-header"></p> </br>  
+		<p class="tool-tip-line"> <p>
+		<p class="tool-tip-street"> <p>
+  </div>
+
+
+  <div id='map'>
 
 	<div class='info-column'>
 		<p class='info-column-header'> </p>
@@ -50,19 +65,12 @@ Smart City Lighting Demo
 
 		<div class='report-button'> Report Light </div>
 		<div class='report-message'> Light was reported!</div>
-
-
 	</div>
 
+	<div id'dashboard'>
+	</div>
 
-  <div id='toolTip'>
-		<p class="tool-tip-header"></p> </br>  
-		<p class="tool-tip-line"> <p>
-		<p class="tool-tip-street"> <p>
   </div>
-
-
-  <div id='map'></div>
 
 <script>
 
@@ -448,6 +456,14 @@ Smart City Lighting Demo
 		}
 	};
 
+	var bindTabButtons = function() {
+		$('.tab').on('click', function(e) {
+			$('.tab').removeClass('selected-tab');
+			$(e.target).addClass('selected-tab');
+			console.log(e)
+		})
+	}
+
 
 
 	var init = function() {
@@ -459,9 +475,10 @@ Smart City Lighting Demo
 		id: 'tburri.paf6hb5o',
 		accessToken: 'pk.eyJ1IjoidGJ1cnJpIiwiYSI6ImNpbGNranp4ZzAwNzZ3OW0yenpiZmEwY2IifQ.Aoisnn9fFWFxmoFwXbEtCg'
 		}).addTo(map);		
-		setTimeLastVisited();
+		//setTimeLastVisited();
 		removeZoomControl();
 		createVectorLayers()
+		bindTabButtons()
 		bindClickEvents();
 		bindWebSocketEvents();	
 	};
@@ -544,14 +561,15 @@ Smart City Lighting Demo
 			ranNum = Math.random(),
 			lampStatus = lampData[i]['lamp_status'],
 			environment = lampData[i]['envior_status'],
-			color = environment !== lampStatus ?
-				(lampStatus === '1' ? '#00b04e':'#003a1a') : 
-				(lampStatus === '1' ? 'red': '#4f0000'),
-			light = L.circle(coordinates, 3, {
-				color: 'white',
-				fillColor: color,
-				fillOpacity: 0.8,
-				weight: 0.5,
+			color = environment !== lampStatus ? '#00b04e':'red',
+			fillColor = lampStatus ==='1' ? '#F5F755': '#585858',
+			//	(lampStatus === '1' ? '#00b04e':'#003a1a') : 
+			//	(lampStatus === '1' ? 'red': '#4f0000'),
+			light = L.circle(coordinates, 4, {
+				color: color,
+				fillColor: fillColor,
+				fillOpacity: 0.9,
+				weight: 4.5,
 				className: lampData[i]['gateway_id'].substring(0,6) + lampData[i]['lamp_id']
 			}).addTo(map);
 
@@ -561,7 +579,7 @@ Smart City Lighting Demo
 			'day': environment === '1' ? 'Daylight':'No Daylight',
 			'state': lampStatus === '1' ? 'ON' : 'OFF',
 			'type': 'light',
-			'color': color
+			'color': fillColor
 		}
 
 

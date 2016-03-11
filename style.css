@@ -14,29 +14,39 @@ width:100%;
 height:75px;
 font-family:'Open Sans';
 font-weight:bold;
-padding-top:5px;
+
 }
 
-.head-line {
-margin:0px;
-margin-left:5%;
-font-size:45px;
-font-weight: bold;
-width:475px;
-display:inline;
+.tab-wrapper {
+background-color: #0B8641;
 }
 
-.last-updated {
-margin:0px;
+.first-element {
 margin-left:3%;
-font-size:14px;
-font-weight: bold;
-font-style: italic;
-display:inline;
-width:100px;
-color:#1C1C1C;
-vertical-align: middle;
 }
+
+.smart-city-lighting,
+.smart-city-dashboard,
+.smart-city-analytics {
+position: relative;
+height: 60px;
+padding-top:15px;
+border-right: 1.5px solid white;
+display: inline;
+float: left;
+font-size: 30px;
+font-weight: bold;
+width: 350px;
+text-align: center;
+border-radius: 0 0 9px 0;
+cursor: pointer;
+}
+
+.selected-tab {
+	background-color: #0B8641;
+	box-shadow: inset 1px 2px 8px 0px #07612F;
+}
+
 
 
 .image-container {
@@ -218,10 +228,20 @@ border-radius: 10px;
 }
 
 
-#map { width: 100%;
-	   height: 100vh;
-		position: relative;
-		float:left;
+#map {
+width: 100%;
+height: 100vh;
+position: relative;
+float:left;
+}
+
+#dashboard {
+display:none;
+width: 100%;
+height: 100vh;
+position: relative;
+float:left;
+background-color:black;
 }
 
 #toolTip {
