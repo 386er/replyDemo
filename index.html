@@ -6,7 +6,6 @@
 <script src="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.js"></script>
 <script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
 <script src="http://underscorejs.org/underscore.js"></script>
-<script type="text/javascript" src="germany.js"></script>
 <script type="text/javascript" src="italy.js"></script>
 <script src="http://fgnass.github.io/spin.js/spin.min.js"></script>
 <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.css"/>
@@ -23,54 +22,63 @@ Smart City Lighting Demo
 
 
 	<div class='header'> 
-				<div class='tab-wrapper'>
-				<div class='smart-city-lighting first-element selected-tab tab'>  SMART CITY LIGHTING </div>
-				<div class="smart-city-dashboard tab"> DASHBOARD</div>
-				<div class="smart-city-analytics tab"> PREDICTIVE ANALYTICS</div>
-				<div>
-				<!--<div class= 'last-updated'> </div> -->
-				<div class='image-container'> <img alt="Reply Logo" src="replyLogo.png" height="65" width="65"></div>
-	</div>
 
-
-	<a class='go-back-button fa fa-angle-double-up fa-3x'> </a>
-
-
-
-  <div id='toolTip'>
-		<p class="tool-tip-header"></p> </br>  
-		<p class="tool-tip-line"> <p>
-		<p class="tool-tip-street"> <p>
-  </div>
-
-
-  <div id='map'>
-
-	<div class='info-column'>
-		<p class='info-column-header'> </p>
-		<p class="info-column-street"> <p>
-		<p class="info-column-count-overall"> <p>
-
-		<div id='lampwrapper'>
-			<div class='lamp greenLamp'> </div>  <span class='green-info' style ='position: absolute; left: 20%; top: 20px'> Green </span> 
-			<div class='lamp redLamp'> </div>    <span class='red-info' style ='position: absolute; left: 20%; top: 55px;' > Red  </span>
+		<div class='tab-wrapper'>
+			<div class='smart-city-lighting first-element selected-tab tab' data-id='map'>  SMART CITY LIGHTING </div>
+			<div class='smart-city-dashboard tab' data-id='dashboard'> DASHBOARD</div>
+			<div class='smart-city-analytics tab' data-id='predictive'> PREDICTIVE ANALYTICS </div>
 		</div>
 
-		<div class='light-details'>
-			<div class='light-details-header'></div>
-			<div class='light-details-id'></div>
-			<div class='light-details-daylight'></div>
-			<div class='light-details-state'></div>
+		<div class='image-container'>
+			<img alt='Reply Logo' src='replyLogo.png' height='65' width='65'>
 		</div>
 
-		<div class='report-button'> Report Light </div>
-		<div class='report-message'> Light was reported!</div>
 	</div>
 
-	<div id'dashboard'>
+
+	<div id='map' class='tab-content'>
+
+	<a class='go-back-button fa fa-angle-double-up fa-4x'> </a>
+
+		<div class='info-column'>
+			<p class='info-column-header'> </p>
+			<p class="info-column-street"> </p>
+			<p class="info-column-count-overall"> </p>
+
+			<div id='lampwrapper'>
+				<div class='lamp greenLamp'> </div>  <span class='green-info' style ='position: absolute; left: 20%; top: 20px'> Green </span> 
+				<div class='lamp redLamp'> </div>    <span class='red-info' style ='position: absolute; left: 20%; top: 55px;' > Red  </span>
+			</div>
+
+			<div class='light-details'>
+				<div class='light-details-header'></div>
+				<div class='light-details-id'></div>
+				<div class='light-details-daylight'></div>
+				<div class='light-details-state'></div>
+			</div>
+
+			<div class='report-button'> Report Light </div>
+			<div class='report-message'> Light was reported!</div>
+
+		</div>
+
+		<div id='toolTip'>
+			<p class="tool-tip-header"></p> </br>  
+			<p class="tool-tip-line"> <p>
+			<p class="tool-tip-street"> <p>
+		</div>
+
 	</div>
 
-  </div>
+	<div id='dashboard' class='tab-content'>
+	</div>
+
+
+	<div id='predictive' class='tab-content'>
+	</div>
+
+
+  
 
 <script>
 
@@ -192,7 +200,7 @@ Smart City Lighting Demo
 			e = e['originalEvent'],
 			elem = document.getElementById("toolTip").style,
 			left = e.clientX+'px',
-			top = (e.clientY+40)+'px';
+			top = (e.clientY -10)+'px';
 
 		if (reset === true) {
 			left = 0;
@@ -252,6 +260,7 @@ Smart City Lighting Demo
 			toolTipMessage = (type === 'light') ? info.day + ' - Status: '  + info.state :  'Active Lights: ' + info.on;
 
 		toolTip.fadeIn(100)
+		toolTip.css({'z-index':2})
 		moveToolTip(e)
 		header.html(info.city)
 
@@ -268,6 +277,7 @@ Smart City Lighting Demo
 	var onMouseOut = function(e) {
 		var toolTip = $('#toolTip') 
 		toolTip.css({'display':'none'});
+		toolTip.css({'z-index':0})
 		moveToolTip(e, true);
 	};
 
@@ -459,11 +469,19 @@ Smart City Lighting Demo
 	var bindTabButtons = function() {
 		$('.tab').on('click', function(e) {
 			$('.tab').removeClass('selected-tab');
-			$(e.target).addClass('selected-tab');
-			console.log(e)
+			var 
+				tab = $(e.target),
+				id = tab.data('id'),
+				tabToBeShown = $('#' + id)
+				tabContents = $('.tab-content');
+
+		debugger;
+
+			tab.addClass('selected-tab');
+			tabContents.css({'display':'none'})
+			tabToBeShown.fadeIn(0);
 		})
 	}
-
 
 
 	var init = function() {
