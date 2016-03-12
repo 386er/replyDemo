@@ -5,6 +5,10 @@ body {
 }
 
 
+.hidden {
+display:none !important;
+}
+
 
 .header {
 background-color: #00b04e;
@@ -72,7 +76,6 @@ right:370px;
 top:15px;
 z-index: 1;
 color: #00b04e !important;
-display: none;
 cursor: pointer;    
 padding-left: 17px;
 padding-top: 10px;
@@ -80,6 +83,7 @@ padding-bottom: 6px;
 border: 3px solid;
 border-radius: 4px
 }
+
 
 .go-back-button:hover {
 color:white !important;
@@ -92,7 +96,6 @@ position: absolute;
 right:0px;
 background-image:url(header3.png);
 z-index: 10;
-display: none;
 }
 
 .info-column-header {
@@ -102,7 +105,7 @@ margin-left:10%;
 padding:0px;  
 font-family: 'Exo 2';
 color: #2E2E2E;
-font-size:36px;
+font-size:50px;
 font-weight:bold;
 }
 
@@ -130,7 +133,6 @@ font-weight: bold;
 
 #lampwrapper {
 position: relative;
-display: none;
 margin-bottom:0px; 
 margin-top:5%;
 margin-left:10%;
@@ -170,7 +172,6 @@ border-radius: 5px;
 
 .light-details {
 position: relative;
-display: none;
 margin-bottom:0px; 
 margin-top:7%;
 margin-left:10%;
@@ -205,35 +206,40 @@ border-radius: 5px;
 
 
 .report-button {
-	display: none;
-	position: relative;
-	text-align: center;
-    margin-top: 30px;
-    border: 1px solid gray;
-    width: 100px;
-    padding: 10px;
-    border-radius: 2px;
-    margin-left: 120px;
-    font-family: 'Open Sans';
-    font-weight:bold;
-    font-size:14px;
-    background-color: #B3B2B2;
-    box-shadow: 2px 2px 10px 0px gray;
-    cursor: pointer;
+position: relative;
+text-align: center;
+margin-top: 30px;
+border: 1px solid gray;
+width: 100px;
+padding: 10px;
+border-radius: 2px;
+margin-left: 120px;
+font-family: 'Open Sans';
+font-weight:bold;
+font-size:14px;
+background-color: #B3B2B2;
+box-shadow: 2px 2px 10px 0px gray;
+cursor: grab;
+color:gray;
+}
+
+.selected-report-button {
+color:black;
+cursor: pointer !important;
 }
 
 .report-message {
-	display: none;
-	position: relative;
-	text-align: center;
-    margin-top: 30px;
-    width: 130px;
-    padding: 10px;
-    margin-left: 105px;
-    font-family: 'Open Sans';
-    font-weight:bold;
-    font-size:14px;
-    color:red;
+display: none;
+position: relative;
+text-align: center;
+margin-top: 30px;
+width: 130px;
+padding: 10px;
+margin-left: 105px;
+font-family: 'Open Sans';
+font-weight:bold;
+font-size:14px;
+color:red;
 }
 
 

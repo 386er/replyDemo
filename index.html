@@ -38,26 +38,26 @@ Smart City Lighting Demo
 
 	<div id='map' class='tab-content'>
 
-	<a class='go-back-button fa fa-angle-double-up fa-4x'> </a>
+	<a class='go-back-button fa fa-angle-double-up fa-4x hidden'> </a>
 
-		<div class='info-column'>
+		<div class='info-column hidden'>
 			<p class='info-column-header'> </p>
 			<p class="info-column-street"> </p>
 			<p class="info-column-count-overall"> </p>
 
-			<div id='lampwrapper'>
+			<div id='lampwrapper' class='hidden'>
 				<div class='lamp greenLamp'> </div>  <span class='green-info' style ='position: absolute; left: 20%; top: 20px'> Green </span> 
 				<div class='lamp redLamp'> </div>    <span class='red-info' style ='position: absolute; left: 20%; top: 55px;' > Red  </span>
 			</div>
 
-			<div class='light-details'>
+			<div class='light-details hidden'>
 				<div class='light-details-header'></div>
 				<div class='light-details-id'></div>
 				<div class='light-details-daylight'></div>
 				<div class='light-details-state'></div>
 			</div>
 
-			<div class='report-button'> Report Light </div>
+			<div class='report-button hidden'> Report Light </div>
 			<div class='report-message'> Light was reported!</div>
 
 		</div>
@@ -169,11 +169,26 @@ Smart City Lighting Demo
 			},
 		spinner = new Spinner(spinnerOptions),
 		target = $('#map');
-		
+	
+
+	var init = function() {
+
+		ws = new WebSocket("ws://nodered.reply-live.de/ws/test");
+		map = L.map('map');
+		L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
+		attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
+		id: 'tburri.paf6hb5o',
+		accessToken: 'pk.eyJ1IjoidGJ1cnJpIiwiYSI6ImNpbGNranp4ZzAwNzZ3OW0yenpiZmEwY2IifQ.Aoisnn9fFWFxmoFwXbEtCg'
+		}).addTo(map);		
+		removeZoomControl();
+		createVectorLayers()
+		bindTabButtons()
+		bindClickEvents();
+		bindWebSocketEvents();	
+	};
 
 
 	var computeCentroid = function(e) {
-
 		var 
 			lat = 0,
 			lng = 0;
@@ -187,7 +202,6 @@ Smart City Lighting Demo
 		lng *= 0.25;
 
 		return [lat,lng];
-
 	};
 
 
@@ -211,23 +225,6 @@ Smart City Lighting Demo
 
 		elem.left = left;
 		elem.top = top;
-	};
-
-
-	var setTimeLastVisited = function() {
-
-		var 
-			d = new Date(),
-			minutes = d.getMinutes(),
-			hours = d.getHours();
-
-		if (minutes < 10) {
-			minutes = '0' + minutes;
-		}
-		if (hours < 10) {
-			hours = '0' + hours;
-		}
-		$('.last-updated').html('Last Update: ' + hours +':'+ minutes)
 	};
 
 
@@ -265,8 +262,6 @@ Smart City Lighting Demo
 		toolTip.css({'z-index':2})
 		moveToolTip(e)
 		header.html(info.city)
-
-
 		line.html(toolTipMessage)	
 	};
 
@@ -284,6 +279,14 @@ Smart City Lighting Demo
 	};
 
 
+	var onMapClick = function(e) {
+		var targetClass = e.originalEvent.target.classList[0];
+		if (targetClass === 'leaflet-zoom-animated') {
+			unSelectLight();
+		}
+	};
+
+
 	var showLightDetails = function(e) {
 
 		var 
@@ -291,9 +294,11 @@ Smart City Lighting Demo
 			id = $('.light-details-id'),
 			day = $('.light-details-daylight'),
 			state = $('.light-details-state'),
+			reportButton = $('.report-button'),
 			info = e.target.info;
 
 			unSelectLight();
+			reportButton.addClass('selected-report-button');
 			currentlySelectedLightEvent = e;
 			currentlySelectedLight = e.target;
 			e.target.setStyle({'fillColor':'white'})
@@ -301,9 +306,7 @@ Smart City Lighting Demo
 			id.html('Selected light ID: ' + info.city);
 			day.html('Current environment: ' + info.day);
 			state.html('State of the light: ' +info.state);
-			$('.report-mask').css({'display':'none'})
 	};
-
 
 
 	var createVectorLayers = function() {
@@ -352,13 +355,11 @@ Smart City Lighting Demo
 	};
 
 
-
 	var removeLayers = function() {
 		renderedLayers.forEach(function(layer) {
 			map.removeLayer(layer)
 		})
 	};
-
 
 
 	var resetLightCount = function() {
@@ -369,9 +370,7 @@ Smart City Lighting Demo
 
 
 	var emptyInfoColumn = function() {
-
 		var
-			infoColumn = $('.info-column'),  
 			header = $('.info-column-header'),
 			street = $('.info-column-street'),
 			count = $('.info-column-count-overall'),
@@ -382,9 +381,9 @@ Smart City Lighting Demo
 		header.html('');
 		street.html('');
 		count.html('');
-		lampWrapper.css({'display':'none'});
-		lightDetails.css({'display':'none'});
-		reportButton.css({'display':'none'});
+		lampWrapper.addClass('hidden');
+		lightDetails.addClass('hidden');
+		reportButton.addClass('hidden');
 		emptyLightDetails();
 	};
 
@@ -420,18 +419,18 @@ Smart City Lighting Demo
 
 	var hideInfoColumn = function() {
 		if (currentLayer === 'world') {
-			var infoColumn = $('.info-column')
-			infoColumn.fadeOut(200)
-			infoColumn.css({'display':'none'})
+			var infoColumn = $('.info-column');
+			infoColumn.addClass('hidden');
 		}	
 	};
 
 
 	var hideGoBackButton = function() {
 		if (currentLayer === 'world' || currentLayer === undefined) {
-			$('.go-back-button').css({'display':'none'})
+			$('.go-back-button').addClass('hidden');
 		}
 	};
+
 
 	var bindClickEvents = function() {
 		bindBackButton()
@@ -452,10 +451,10 @@ Smart City Lighting Demo
 
 
 	var goLayerUp = function() {
-
 		if (currentLayer === 'city') {
 			renderWorldView();
 		} else if(currentLayer === 'street') {
+			$('.report-message').css({'display':'none'});
 			unSelectLight();
 			renderCityView();
 		} 
@@ -464,8 +463,8 @@ Smart City Lighting Demo
 
 	var enableControls = function() {
 		if (currentLayer === 'city' || currentLayer === 'street') {
-			$('.info-column').fadeIn(0)
-			$('.go-back-button').css({'display':'inline'})
+			$('.info-column').removeClass('hidden');
+			$('.go-back-button').removeClass('hidden')
 		}
 	};
 
@@ -478,30 +477,12 @@ Smart City Lighting Demo
 				tabToBeShown = $('#' + id)
 				tabContents = $('.tab-content');
 
-
 			tab.addClass('selected-tab');
 			tabContents.css({'display':'none'})
 			tabToBeShown.fadeIn(0);
 		})
 	}
 
-
-	var init = function() {
-
-		ws = new WebSocket("ws://nodered.reply-live.de/ws/test");
-		map = L.map('map');
-		L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
-		attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
-		id: 'tburri.paf6hb5o',
-		accessToken: 'pk.eyJ1IjoidGJ1cnJpIiwiYSI6ImNpbGNranp4ZzAwNzZ3OW0yenpiZmEwY2IifQ.Aoisnn9fFWFxmoFwXbEtCg'
-		}).addTo(map);		
-		//setTimeLastVisited();
-		removeZoomControl();
-		createVectorLayers()
-		bindTabButtons()
-		bindClickEvents();
-		bindWebSocketEvents();	
-	};
 
 	var bindWebSocketEvents = function() {
 
@@ -531,16 +512,10 @@ Smart City Lighting Demo
 					lights.forEach(addLightToLayer)
 					populateInfoColumn('Via Guido Reni');
 					console.log('Streetview was updated!')
-				//	if (currentlySelectedLight !== undefined) {
-				//		debugger;
-				//		showLightDetails(currentlySelectedLightEvent);	
-				//	}
 				}
 			}
 		}
-	}
-
-
+	};
 
 
 	var renderWorldView = function() {
@@ -575,6 +550,23 @@ Smart City Lighting Demo
 	};
 
 
+	var renderStreetView = function(e) {
+
+		var 
+			centroid = computeCentroid(e), 
+			streetName = e.target.info.city;
+
+		currentLayer = 'street';
+		clearView();
+		enableControls();
+
+		map.setView(centroid, STREET_ZOOM);
+		setZoomConstraint(STREET_ZOOM);
+		lights.forEach(addLightToLayer)
+		populateInfoColumn(streetName);
+	};
+
+
 	var addLightToLayer = function(coordinates, i) {
 
 		var 
@@ -583,8 +575,6 @@ Smart City Lighting Demo
 			environment = lampData[i]['envior_status'],
 			color = environment !== lampStatus ? '#00b04e':'red',
 			fillColor = lampStatus ==='1' ? '#F5F755': '#585858',
-			//	(lampStatus === '1' ? '#00b04e':'#003a1a') : 
-			//	(lampStatus === '1' ? 'red': '#4f0000'),
 			light = L.circle(coordinates, 4, {
 				color: color,
 				fillColor: fillColor,
@@ -622,51 +612,28 @@ Smart City Lighting Demo
 			header.html('Rome');
 			streetLabel.html(streetName);
 			$('.info-column-count-overall').html('Number of Lights: ' + overAllcount);
-			$('#lampwrapper').fadeIn(0);
-			$('.light-details').fadeIn(0);
+			$('#lampwrapper').removeClass('hidden');
+			$('.light-details').removeClass('hidden');
 			$('.green-info').html('Functional Lights ' + countGreen);
 			$('.red-info').html('Dysfunctional Lights: ' + countRed);
-			reportButton.fadeIn(0);
+			reportButton.removeClass('hidden');
 		}
-	};
-
-
-	var renderStreetView = function(e) {
-
-		var 
-			centroid = computeCentroid(e), 
-			streetName = e.target.info.city;
-
-		currentLayer = 'street';
-		clearView();
-		enableControls();
-
-		map.setView(centroid, STREET_ZOOM);
-		setZoomConstraint(STREET_ZOOM);
-		lights.forEach(addLightToLayer)
-		populateInfoColumn(streetName);
 	};
 
 
 	var unSelectLight = function() {
 		if (currentlySelectedLight !== undefined) {
+			$('.report-button').removeClass('selected-report-button');
 			emptyLightDetails();
 			currentlySelectedLight.setStyle({'fillColor':currentlySelectedLight.info.color})
 			currentlySelectedLight = undefined;
 			currentlySelectedLightEvent = undefined;
 		}
-	}
-
-
-	var onMapClick = function(e) {
-		var targetClass = e.originalEvent.target.classList[0];
-		if (targetClass === 'leaflet-zoom-animated') {
-			unSelectLight();
-		}
 	};
 
+
 	
-	var popup = L.popup();
+	//var popup = L.popup();
 	spinner.spin();
 	target.append(spinner.el);
 	init();
