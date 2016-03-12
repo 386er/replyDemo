@@ -76,7 +76,7 @@ Smart City Lighting Demo
 
 
 	<div id='predictive' class='tab-content'>
-		<div class='predictive-wrapper'>PREDICTIVE ANALYSIS</div>
+		<div class='predictive-wrapper'>PREDICTIVE ANALYTICS</div>
 	</div>
 
 
@@ -436,7 +436,7 @@ Smart City Lighting Demo
 	var bindClickEvents = function() {
 		bindBackButton()
 		map.on('click', onMapClick);
-		$('.report-button').on('click', function() {
+		$('.report-button').on('click', function(e) {
 			if (currentlySelectedLight !== undefined) {
 				$('.report-message').fadeIn(0)
 				$('.report-message').fadeOut(3500)
@@ -456,6 +456,7 @@ Smart City Lighting Demo
 		if (currentLayer === 'city') {
 			renderWorldView();
 		} else if(currentLayer === 'street') {
+			unSelectLight();
 			renderCityView();
 		} 
 	};
@@ -624,7 +625,7 @@ Smart City Lighting Demo
 			$('#lampwrapper').fadeIn(0);
 			$('.light-details').fadeIn(0);
 			$('.green-info').html('Functional Lights ' + countGreen);
-			$('.red-info').html('Disfunctional Lights: ' + countRed);
+			$('.red-info').html('Dysfunctional Lights: ' + countRed);
 			reportButton.fadeIn(0);
 		}
 	};
@@ -658,12 +659,10 @@ Smart City Lighting Demo
 
 
 	var onMapClick = function(e) {
-		unSelectLight();
-	/*	popup
-			.setLatLng(e.latlng)
-			.setContent("You clicked the map at " + e.latlng.toString())
-			.openOn(map);
-	*/	
+		var targetClass = e.originalEvent.target.classList[0];
+		if (targetClass === 'leaflet-zoom-animated') {
+			unSelectLight();
+		}
 	};
 
 	
