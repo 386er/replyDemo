@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<DOCCTYPE html>
 <meta charset="utf-8">
 
 
@@ -71,15 +71,21 @@ Smart City Lighting Demo
 
 	</div>
 
-	<div id='dashboard' class='tab-content'>
-		<div class='dashboard-wrapper'>DASHBOARD</div>
+        <div id='dashboard' class='tab-content'>
+		<div class='dashboard-wrapper' style="border:none" >
+			<iframe src="http://46.101.139.40/#source=netcamp.json" width="100%" style="position:absolute; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%; border:none; margin:0; padding:0; overflow:hidden; z-index:999999;">
+	    			Your browser doesn't support iframes
+			</iframe>
+		</div>
 	</div>
 
-
-	<div id='predictive' class='tab-content'>
-		<div class='predictive-wrapper'>PREDICTIVE ANALYTICS</div>
+        <div id='predictive' class='tab-content'>
+		<div class='predictive-wrapper' style="border:none" >
+			<iframe src="http://46.101.139.40/heatmap.html" width="100%" style="position:absolute; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%; border:none; margin:0; padding:0; overflow:hidden; z-index:999999;">
+	    			Your browser doesn't support iframes
+			</iframe>
+		</div>
 	</div>
-
 
   
 
@@ -139,14 +145,14 @@ Smart City Lighting Demo
 		},
 		guidoReniRectangle = [[41.929, 12.463], [41.927, 12.4705]],
 		lights = [
-			[41.92782, 12.46522],
+			[41.92807, 12.46633],  
+			[41.92821, 12.4669],   
+			[41.92788, 12.46641],  
+			[41.92802, 12.467],  
 			[41.92762, 12.46530],
-			[41.92794, 12.46576],
 			[41.92774, 12.46585],
-			[41.92807, 12.46633],
-			[41.92788, 12.46641],
-			[41.92821, 12.4669],
-			[41.92802, 12.467],
+			[41.92782, 12.46522], 
+			[41.92794, 12.46576],  
 		],
 		italyLayer,
 		map,
@@ -649,5 +655,7 @@ Smart City Lighting Demo
 </body>
 
 </html>
+
+
 
 
